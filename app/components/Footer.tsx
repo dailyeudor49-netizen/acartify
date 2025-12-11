@@ -10,12 +10,12 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1">
             <h3 className="font-bold text-lg mb-3">Acartify</h3>
             <p className="text-gray-400 text-sm mb-3">
-              Premium tech gadgets and electronics at wholesale prices. Fast delivery worldwide.
+              Next-gen wholesale tech platform. Dark mode for your business, bright future for profits.
             </p>
             <div className="text-gray-400 text-sm space-y-1">
               <p>info@acartify.com</p>
-              <p>22 Rue de Commerce</p>
-              <p>Paris 75015, France</p>
+              <p>78 Grafton Street</p>
+              <p>Dublin D02 VF65, Ireland</p>
             </div>
           </div>
 
@@ -51,8 +51,8 @@ export default function Footer() {
         <div className="mt-10 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-500">
           <p>&copy; {year} Acartify Ltd. All rights reserved.</p>
           <div className="flex gap-4">
-            <span>VAT: FR 82 123456789</span>
-            <span>Registered in France</span>
+            <span>VAT: IE 9847231F</span>
+            <span>Registered in Ireland</span>
           </div>
         </div>
       </div>

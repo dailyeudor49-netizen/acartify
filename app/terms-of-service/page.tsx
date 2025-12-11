@@ -92,11 +92,11 @@ export default function TermsOfServicePage() {
               <h2 className="text-xl font-bold text-gray-900 mb-3">10. Contact Information</h2>
               <p className="text-gray-600">
                 Acartify Ltd<br />
-                22 Rue de Commerce<br />
-                Paris 75015, France<br />
-                Email: info@acartify.com<br />
-                VAT: FR 82 123456789<br />
-                Registered in France
+                78 Grafton Street<br />
+                Dublin D02 VF65, Ireland<br />
+                Email: hello@acartify.ie<br />
+                VAT: IE 9847231F<br />
+                Registered in Ireland
               </p>
             </div>
           </div>
