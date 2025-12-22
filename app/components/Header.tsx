@@ -23,7 +23,7 @@ export default function Header() {
           <Link href="/" className="flex items-center">
             <Image
               src="/images/logo.jpg"
-              alt="Acartify"
+              alt="Kizbuy"
               width={150}
               height={45}
               className="h-9 w-auto"
@@ -38,8 +38,8 @@ export default function Header() {
                 href={link.href}
                 className={`text-sm font-medium transition-colors ${
                   pathname === link.href
-                    ? "text-teal-600"
-                    : "text-gray-700 hover:text-teal-600"
+                    ? "text-amber-600"
+                    : "text-gray-700 hover:text-amber-600"
                 }`}
               >
                 {link.label}
@@ -47,7 +47,7 @@ export default function Header() {
             ))}
             <Link
               href="/contact"
-              className="ml-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-500"
+              className="ml-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-500"
             >
               Get Quote
             </Link>
@@ -75,7 +75,7 @@ export default function Header() {
                 href={link.href}
                 onClick={() => setIsOpen(false)}
                 className={`block py-2 text-sm font-medium ${
-                  pathname === link.href ? "text-teal-600" : "text-gray-700"
+                  pathname === link.href ? "text-amber-600" : "text-gray-700"
                 }`}
               >
                 {link.label}
@@ -84,7 +84,7 @@ export default function Header() {
             <Link
               href="/contact"
               onClick={() => setIsOpen(false)}
-              className="block mt-2 py-2 text-sm font-medium text-teal-600"
+              className="block mt-2 py-2 text-sm font-medium text-amber-600"
             >
               Get Quote
             </Link>

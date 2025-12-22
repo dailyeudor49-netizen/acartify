@@ -17,7 +17,7 @@ export default function FacebookPixel() {
       const win = window as any;
       if (typeof window !== 'undefined' && typeof win.fbq === 'function') {
         clearInterval(waitForFbq);
-
+        
         const pageViewEventId = generateEventId();
 
         // Traccia PageView su tutte le pagine

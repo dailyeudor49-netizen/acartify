@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import FacebookPixel from "./components/FacebookPixel";
 import GoogleAdsPixel from "./components/GoogleAdsPixel";
+import LayoutWrapper from "./components/LayoutWrapper";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -31,9 +30,9 @@ export default function RootLayout({
       <body className={`${poppins.variable} font-sans antialiased`}>
         <FacebookPixel />
         <GoogleAdsPixel />
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <LayoutWrapper>
+          {children}
+        </LayoutWrapper>
       </body>
     </html>
   );

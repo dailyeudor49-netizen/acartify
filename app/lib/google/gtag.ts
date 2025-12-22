@@ -3,8 +3,8 @@ import { GoogleAdsCountryConfig } from '@/app/config/google-ads';
 // Extend Window interface for gtag
 declare global {
   interface Window {
-    dataLayer: unknown[];
-    gtag: (...args: unknown[]) => void;
+    dataLayer?: unknown[];
+    gtag?: (...args: unknown[]) => void;
   }
 }
 

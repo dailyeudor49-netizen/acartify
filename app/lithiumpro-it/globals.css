@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom pulse animation for urgent elements */
+@keyframes pulse-fast {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-pulse-fast {
+  animation: pulse-fast 1.5s infinite;
+}
+
+/* Clip path for the diagonal section */
+.clip-path-slant {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+}
+
+/* Ensure smooth scrolling works globally */
+html {
+  scroll-behavior: smooth;
+}
