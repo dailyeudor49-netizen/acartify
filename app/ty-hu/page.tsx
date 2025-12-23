@@ -90,14 +90,10 @@ export default function ThankYouPage() {
           window.gtag = function() { window.dataLayer!.push(arguments); };
           window.gtag('js', new Date());
 
-          // Configure gtag
-          window.gtag('config', GOOGLE_ADS_CONVERSION_ID);
-
-          // Track PageView
-          window.gtag('event', 'page_view', {
-            send_to: GOOGLE_ADS_CONVERSION_ID,
+          // Configure gtag (without automatic page_view to avoid duplicate conversions)
+          window.gtag('config', GOOGLE_ADS_CONVERSION_ID, {
+            'send_page_view': false
           });
-          console.log('[Google Ads] PageView tracked');
 
           // Prepare Enhanced Conversions user_data with hashed values
           const userData: Record<string, unknown> = {};
