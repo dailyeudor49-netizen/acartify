@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Star, Check, ArrowDown, Shield, CheckCircle2, Truck, Zap, Battery, Package, ShoppingCart, Info, Award, Gift, Scissors, BadgeCheck, XCircle, Minus, X, CheckCheck, Wallet, RefreshCw, Flame, Hammer, AlertTriangle, Cpu, Camera } from 'lucide-react';
 import { StickyFooter } from './StickyFooter';
 import { OrderForm } from './OrderForm';
@@ -9,6 +9,13 @@ import { ComparisonTable } from './ComparisonTable';
 import { FAQ } from './FAQ';
 import { REVIEWS, PRICE_PROMO, PRICE_OLD, DISCOUNT_PERCENT, PRODUCT_NAME, BENEFIT_LIST, VISUAL_PROOFS, PRESS_LOGOS, CAROUSEL_IMAGES, FAQS, WHATS_IN_BOX, PAIN_POINTS, KIT_IMAGE_URL, CURRENCY } from '../constants';
 
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+    dataLayer?: unknown[];
+  }
+}
+
 const LandingPage = () => {
   const scrollToOrder = () => {
     const element = document.getElementById('order-form');
@@ -16,6 +23,23 @@ const LandingPage = () => {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Google Ads PageView Tracking
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17806346250';
+      document.head.appendChild(script);
+
+      script.onload = () => {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { window.dataLayer!.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', 'AW-17806346250');
+      };
+    }
+  }, []);
 
   return (
     <div className="pb-24 md:pb-0 bg-white min-h-screen font-sans text-gray-900 overflow-x-hidden">
