@@ -9,6 +9,13 @@ import {
   XCircle, CheckCircle, AlertOctagon
 } from 'lucide-react';
 
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+    dataLayer?: unknown[];
+  }
+}
+
 /* =========================================================================
    1. HERO SECTION
    ========================================================================= */
@@ -1077,6 +1084,23 @@ export default function LandingPage() {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Google Ads PageView Tracking
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17806346250';
+      document.head.appendChild(script);
+
+      script.onload = () => {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { window.dataLayer!.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', 'AW-17806346250');
+      };
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 pb-24 md:pb-0">
