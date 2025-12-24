@@ -82,8 +82,18 @@ export default function ThankYouPage() {
 
       // Only track if value > 0
       if (ecValue > 0) {
-        // Function to track conversion
-        const trackConversion = async () => {
+        // Load gtag script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_CONVERSION_ID}`;
+        document.head.appendChild(script);
+
+        script.onload = async () => {
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function() { window.dataLayer!.push(arguments); };
+          window.gtag('js', new Date());
+          window.gtag('config', GOOGLE_ADS_CONVERSION_ID);
+
           // Prepare Enhanced Conversions user_data with hashed values
           const userData: Record<string, unknown> = {};
           if (ecPhone) {
@@ -97,7 +107,7 @@ export default function ThankYouPage() {
           }
 
           // Track Purchase Conversion with Enhanced Conversions
-          window.gtag!('event', 'conversion', {
+          window.gtag('event', 'conversion', {
             'send_to': `${GOOGLE_ADS_CONVERSION_ID}/${GOOGLE_ADS_CONVERSION_LABEL}`,
             'value': ecValue,
             'currency': COUNTRY_CONFIG.currency,
@@ -118,33 +128,8 @@ export default function ThankYouPage() {
             enhanced_conversions: !!Object.keys(userData).length
           });
         };
-
-        // Check if gtag is already loaded (from landing page)
-        if (window.gtag) {
-          console.log('[Google Ads] gtag already loaded, tracking conversion directly');
-          trackConversion();
-        } else {
-          // Load gtag script only if not already present
-          const script = document.createElement('script');
-          script.async = true;
-          script.src = `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_CONVERSION_ID}`;
-          document.head.appendChild(script);
-
-          script.onload = async () => {
-            window.dataLayer = window.dataLayer || [];
-            window.gtag = function() { window.dataLayer!.push(arguments); };
-            window.gtag('js', new Date());
-
-            // Configure gtag (without automatic page_view to avoid duplicate conversions)
-            window.gtag('config', GOOGLE_ADS_CONVERSION_ID, {
-              'send_page_view': false
-            });
-
-            await trackConversion();
-          };
-        }
       } else {
-        console.log('[Google Ads] Conversion not tracked - ID not configured or value is 0');
+        console.log('[Google Ads] Conversion not tracked - value is 0');
       }
     }
   }, []);
