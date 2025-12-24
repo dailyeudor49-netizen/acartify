@@ -82,7 +82,7 @@ export const OrderForm: React.FC = () => {
       // Only save conversion data and redirect if API call was successful
       if (response.ok) {
         // Clear any previous conversion flags
-        sessionStorage.removeItem('gg_conversion_tracked');
+        sessionStorage.removeItem('conversionTracked');
 
         // Save data to sessionStorage for conversion tracking
         sessionStorage.setItem('ec_name', formData.name);

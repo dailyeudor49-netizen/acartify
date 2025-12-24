@@ -44,7 +44,6 @@ export default function ThankYouPage() {
   const [orderCode, setOrderCode] = useState('');
 
   useEffect(() => {
-    // Generate order code
     const stored = sessionStorage.getItem('orderCode');
     if (stored) {
       setOrderCode(stored);
@@ -55,12 +54,12 @@ export default function ThankYouPage() {
     }
 
     // Google Ads Conversion Tracking
-    const alreadyTracked = sessionStorage.getItem('gg_conversion_tracked');
+    const alreadyTracked = sessionStorage.getItem('conversionTracked');
     const skipConversion = sessionStorage.getItem('skipConversion');
 
     // Skip conversion if it's a DOUBLE from network
     if (skipConversion === 'true') {
-      console.log('[Google Ads] Skipping conversion - DOUBLE lead from network');
+      console.log('⚠️ Skipping Google Ads conversion - DOUBLE lead from network');
       sessionStorage.removeItem('skipConversion');
       return;
     }
@@ -71,69 +70,50 @@ export default function ThankYouPage() {
       // Get Enhanced Conversions data from sessionStorage
       const ecPhone = sessionStorage.getItem('ec_phone') || '';
       const ecAddress = sessionStorage.getItem('ec_address') || '';
-      const ecValue = parseFloat(sessionStorage.getItem('ec_value') || '0');
+      const ecValue = parseFloat(sessionStorage.getItem('ec_value') || '1.0');
 
-      // Google Ads Conversion ID and Label for Czech Republic
-      const GOOGLE_ADS_CONVERSION_ID = 'AW-17806346250';
-      const GOOGLE_ADS_CONVERSION_LABEL = '5gc8CK2EwdUbEIqQ3apC';
+      // Load gtag script
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17806346250';
+      document.head.appendChild(script);
 
-      // Only track if value > 0
-      if (ecValue > 0) {
-        // Load gtag script
-        const script = document.createElement('script');
-        script.async = true;
-        script.src = `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_CONVERSION_ID}`;
-        document.head.appendChild(script);
+      script.onload = async () => {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { window.dataLayer!.push(arguments); };
+        window.gtag('js', new Date());
 
-        script.onload = async () => {
-          window.dataLayer = window.dataLayer || [];
-          window.gtag = function() { window.dataLayer!.push(arguments); };
-          window.gtag('js', new Date());
+        // Prepare Enhanced Conversions user_data with hashed values
+        const userData: Record<string, string> = {};
+        if (ecPhone) {
+          const normalizedPhone = ecPhone.replace(/[\s\-\(\)]/g, '');
+          userData.phone_number = await sha256(normalizedPhone);
+        }
+        if (ecAddress) {
+          userData.address = {
+            street: await sha256(ecAddress)
+          } as unknown as string;
+        }
 
-          // Configure gtag (without automatic page_view to avoid duplicate conversions)
-          window.gtag('config', GOOGLE_ADS_CONVERSION_ID, {
-            'send_page_view': false
-          });
+        // Purchase CZ conversion
+        window.gtag('config', 'AW-17806346250');
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-17806346250/5gc8CK2EwdUbEIqQ3apC',
+          'value': ecValue,
+          'currency': 'CZK',
+          'transaction_id': transactionId,
+          'user_data': userData
+        });
+        sessionStorage.setItem('conversionTracked', 'true');
 
-          // Prepare Enhanced Conversions user_data with hashed values
-          const userData: Record<string, unknown> = {};
-          if (ecPhone) {
-            const normalizedPhone = ecPhone.replace(/[\s\-\(\)]/g, '');
-            userData.phone_number = await sha256(normalizedPhone);
-          }
-          if (ecAddress) {
-            userData.address = {
-              street: await sha256(ecAddress)
-            };
-          }
+        // Clean up EC data
+        sessionStorage.removeItem('ec_name');
+        sessionStorage.removeItem('ec_phone');
+        sessionStorage.removeItem('ec_address');
+        sessionStorage.removeItem('ec_value');
 
-          // Track Purchase Conversion with Enhanced Conversions
-          window.gtag('event', 'conversion', {
-            'send_to': `${GOOGLE_ADS_CONVERSION_ID}/${GOOGLE_ADS_CONVERSION_LABEL}`,
-            'value': ecValue,
-            'currency': COUNTRY_CONFIG.currency,
-            'transaction_id': transactionId,
-            'user_data': userData
-          });
-
-          sessionStorage.setItem('gg_conversion_tracked', 'true');
-
-          // Clean up EC data
-          sessionStorage.removeItem('ec_name');
-          sessionStorage.removeItem('ec_phone');
-          sessionStorage.removeItem('ec_address');
-          sessionStorage.removeItem('ec_value');
-
-          console.log('[Google Ads] Purchase conversion tracked:', {
-            value: ecValue,
-            currency: COUNTRY_CONFIG.currency,
-            transaction_id: transactionId,
-            enhanced_conversions: !!Object.keys(userData).length
-          });
-        };
-      } else {
-        console.log('[Google Ads] Conversion not tracked - ID not configured or value is 0');
-      }
+        console.log('✅ Google Ads conversion tracked with Enhanced Conversions, transaction_id:', transactionId);
+      };
     }
   }, []);
 
