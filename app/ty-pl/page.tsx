@@ -66,6 +66,9 @@ export default function ThankYouPage() {
     }
 
     if (typeof window !== 'undefined' && !alreadyTracked) {
+      // IMMEDIATELY set flag to prevent duplicate tracking (race condition fix)
+      sessionStorage.setItem('gg_conversion_tracked', 'true');
+
       const transactionId = sessionStorage.getItem('orderCode') || Math.floor(100000 + Math.random() * 900000).toString();
 
       // Get Enhanced Conversions data from sessionStorage
@@ -115,8 +118,6 @@ export default function ThankYouPage() {
             'transaction_id': transactionId,
             'user_data': userData
           });
-
-          sessionStorage.setItem('gg_conversion_tracked', 'true');
 
           // Clean up EC data
           sessionStorage.removeItem('ec_name');
