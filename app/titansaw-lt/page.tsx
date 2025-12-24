@@ -821,10 +821,13 @@ const OrderForm: React.FC = () => {
     setIsSubmitting(true);
 
     // Save data to sessionStorage for conversion tracking
+    // Clear any previous conversion flags first
+    sessionStorage.removeItem('gg_conversion_tracked');
     sessionStorage.setItem('ec_name', formData.name);
     sessionStorage.setItem('ec_phone', formData.phone);
     sessionStorage.setItem('ec_address', formData.address);
     sessionStorage.setItem('ec_value', '64');
+    sessionStorage.setItem('conversion_pending', 'true');
 
     try {
       // Get fingerprint from hidden input (populated by network script)
