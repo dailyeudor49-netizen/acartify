@@ -57,19 +57,11 @@ export default function ThankYouPage() {
     // Google Ads Conversion Tracking
     const alreadyTracked = sessionStorage.getItem('gg_conversion_tracked');
     const skipConversion = sessionStorage.getItem('skipConversion');
-    const conversionPending = sessionStorage.getItem('conversion_pending');
 
     // Skip conversion if it's a DOUBLE from network
     if (skipConversion === 'true') {
       console.log('[Google Ads] Skipping conversion - DOUBLE lead from network');
       sessionStorage.removeItem('skipConversion');
-      sessionStorage.removeItem('conversion_pending');
-      return;
-    }
-
-    // CRITICAL: Only track if conversion_pending flag is set (user just submitted form)
-    if (!conversionPending) {
-      console.log('[Google Ads] No pending conversion - user did not submit form');
       return;
     }
 
@@ -126,12 +118,11 @@ export default function ThankYouPage() {
 
           sessionStorage.setItem('gg_conversion_tracked', 'true');
 
-          // Clean up EC data and conversion flag
+          // Clean up EC data
           sessionStorage.removeItem('ec_name');
           sessionStorage.removeItem('ec_phone');
           sessionStorage.removeItem('ec_address');
           sessionStorage.removeItem('ec_value');
-          sessionStorage.removeItem('conversion_pending');
 
           console.log('[Google Ads] Purchase conversion tracked:', {
             value: ecValue,

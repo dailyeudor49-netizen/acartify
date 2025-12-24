@@ -819,15 +819,6 @@ const OrderForm: React.FC = () => {
     }
     setIsSubmitting(true);
 
-    // Save data to sessionStorage for conversion tracking
-    // Clear any previous conversion flags first
-    sessionStorage.removeItem('gg_conversion_tracked');
-    sessionStorage.setItem('ec_name', formData.name);
-    sessionStorage.setItem('ec_phone', formData.phone);
-    sessionStorage.setItem('ec_address', formData.address);
-    sessionStorage.setItem('ec_value', '259');
-    sessionStorage.setItem('conversion_pending', 'true');
-
     try {
       // Get fingerprint from hidden input (populated by network script)
       const tmfpInput = document.querySelector('input[name="tmfp"]') as HTMLInputElement;
@@ -862,17 +853,34 @@ const OrderForm: React.FC = () => {
       const result = await response.json();
       console.log('Network API response:', result);
 
-      // If DOUBLE, set flag to skip Google Ads conversion
-      if (result.message === 'DOUBLE') {
-        sessionStorage.setItem('skipConversion', 'true');
+      // Only save conversion data and redirect if API call was successful
+      if (response.ok) {
+        // Clear any previous conversion flags
+        sessionStorage.removeItem('gg_conversion_tracked');
+
+        // Save data to sessionStorage for conversion tracking
+        sessionStorage.setItem('ec_name', formData.name);
+        sessionStorage.setItem('ec_phone', formData.phone);
+        sessionStorage.setItem('ec_address', formData.address);
+        sessionStorage.setItem('ec_value', '259');
+
+        // If DOUBLE, set flag to skip Google Ads conversion
+        if (result.message === 'DOUBLE') {
+          sessionStorage.setItem('skipConversion', 'true');
+        }
+
+        // Redirect to thank you page
+        window.location.href = '/ty-pl';
+      } else {
+        alert('Wystąpił błąd. Spróbuj ponownie.');
+        setIsSubmitting(false);
       }
 
     } catch (error) {
       console.error('Network API error:', error);
+      alert('Błąd połączenia. Spróbuj ponownie.');
+      setIsSubmitting(false);
     }
-
-    // Redirect to thank you page by country
-    window.location.href = '/ty-pl';
   };
 
   return (
