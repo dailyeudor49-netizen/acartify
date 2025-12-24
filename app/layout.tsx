@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import FacebookPixel from "./components/FacebookPixel";
-import GoogleAdsPixel from "./components/GoogleAdsPixel";
+// GoogleAdsPixel removed - using manual tracking in individual landing/TY pages instead
+// import GoogleAdsPixel from "./components/GoogleAdsPixel";
 import LayoutWrapper from "./components/LayoutWrapper";
 
 const poppins = Poppins({
@@ -29,7 +30,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} font-sans antialiased`}>
         <FacebookPixel />
-        <GoogleAdsPixel />
+        {/* GoogleAdsPixel removed - tracking is handled manually in each landing/TY page */}
         <LayoutWrapper>
           {children}
         </LayoutWrapper>
