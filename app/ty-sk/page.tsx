@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
+    __conversionFired?: boolean;
   }
 }
 
@@ -42,6 +43,7 @@ async function sha256(message: string): Promise<string> {
 
 export default function ThankYouPage() {
   const [orderCode, setOrderCode] = useState('');
+  const hasTrackedRef = useRef(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('orderCode');
@@ -53,56 +55,64 @@ export default function ThankYouPage() {
       setOrderCode(newCode);
     }
 
-    // Google Ads Conversion Tracking
+    // TRIPLE protection against double firing
+    if (hasTrackedRef.current) return;
+    if (typeof window !== 'undefined' && window.__conversionFired) return;
     const alreadyTracked = sessionStorage.getItem('conversionTracked');
-    const skipConversion = sessionStorage.getItem('skipConversion');
+    if (alreadyTracked) return;
 
-    // Skip conversion if it's a DOUBLE from network
+    const skipConversion = sessionStorage.getItem('skipConversion');
     if (skipConversion === 'true') {
-      console.log('⚠️ Skipping Google Ads conversion - DOUBLE lead from network');
       sessionStorage.removeItem('skipConversion');
       return;
     }
 
-    if (typeof window !== 'undefined' && !alreadyTracked) {
-      // Set flag IMMEDIATELY to prevent double tracking from React Strict Mode
-      sessionStorage.setItem('conversionTracked', 'true');
+    // Set ALL flags IMMEDIATELY
+    hasTrackedRef.current = true;
+    window.__conversionFired = true;
+    sessionStorage.setItem('conversionTracked', 'true');
 
-      const transactionId = sessionStorage.getItem('orderCode') || Math.floor(100000 + Math.random() * 900000).toString();
+    const transactionId = sessionStorage.getItem('orderCode') || Math.floor(100000 + Math.random() * 900000).toString();
+    const ecPhone = sessionStorage.getItem('ec_phone') || '';
+    const ecAddress = sessionStorage.getItem('ec_address') || '';
+    const ecValue = parseFloat(sessionStorage.getItem('ec_value') || '1.0');
 
-      // Get Enhanced Conversions data from sessionStorage
-      const ecPhone = sessionStorage.getItem('ec_phone') || '';
-      const ecAddress = sessionStorage.getItem('ec_address') || '';
-      const ecValue = parseFloat(sessionStorage.getItem('ec_value') || '1.0');
+    const fireConversion = async () => {
+      const userData: Record<string, string> = {};
+      if (ecPhone) {
+        userData.phone_number = await sha256(ecPhone.replace(/[\s\-\(\)]/g, ''));
+      }
+      if (ecAddress) {
+        userData.address = { street: await sha256(ecAddress) } as unknown as string;
+      }
 
-      // Function to fire conversion
-      const fireConversion = async () => {
-        const userData: Record<string, string> = {};
-        if (ecPhone) {
-          const normalizedPhone = ecPhone.replace(/[\s\-\(\)]/g, '');
-          userData.phone_number = await sha256(normalizedPhone);
-        }
-        if (ecAddress) {
-          userData.address = { street: await sha256(ecAddress) } as unknown as string;
-        }
+      window.gtag!('event', 'conversion', {
+        'send_to': 'AW-17806346250/u0wACMyLwdUbEIqQ3apC',
+        'value': ecValue,
+        'currency': 'EUR',
+        'transaction_id': transactionId,
+        'user_data': userData
+      });
 
-        window.gtag!('event', 'conversion', {
-          'send_to': 'AW-17806346250/u0wACMyLwdUbEIqQ3apC',
-          'value': ecValue,
-          'currency': 'EUR',
-          'transaction_id': transactionId,
-          'user_data': userData
-        });
+      sessionStorage.removeItem('ec_name');
+      sessionStorage.removeItem('ec_phone');
+      sessionStorage.removeItem('ec_address');
+      sessionStorage.removeItem('ec_value');
+      console.log('✅ Google Ads conversion tracked, transaction_id:', transactionId);
+    };
 
-        sessionStorage.removeItem('ec_name');
-        sessionStorage.removeItem('ec_phone');
-        sessionStorage.removeItem('ec_address');
-        sessionStorage.removeItem('ec_value');
-        console.log('✅ Google Ads conversion tracked, transaction_id:', transactionId);
-      };
-
-      if (typeof window.gtag === 'function') {
-        fireConversion();
+    if (typeof window.gtag === 'function') {
+      fireConversion();
+    } else {
+      const existingScript = document.querySelector('script[src*="googletagmanager.com/gtag/js"]');
+      if (existingScript) {
+        const waitForGtag = setInterval(() => {
+          if (typeof window.gtag === 'function') {
+            clearInterval(waitForGtag);
+            fireConversion();
+          }
+        }, 50);
+        setTimeout(() => clearInterval(waitForGtag), 5000);
       } else {
         const script = document.createElement('script');
         script.async = true;

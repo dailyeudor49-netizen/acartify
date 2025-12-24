@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
+    __conversionFired?: boolean;
   }
 }
 
@@ -42,6 +43,7 @@ async function sha256(message: string): Promise<string> {
 
 export default function ThankYouPage() {
   const [orderCode, setOrderCode] = useState('');
+  const hasTrackedRef = useRef(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('orderCode');
@@ -53,66 +55,93 @@ export default function ThankYouPage() {
       setOrderCode(newCode);
     }
 
-    // Google Ads Conversion Tracking
+    // TRIPLE protection against double firing:
+    // 1. useRef (survives re-renders in same mount)
+    // 2. window flag (survives across components in same page load)
+    // 3. sessionStorage (survives across page loads)
+    if (hasTrackedRef.current) {
+      console.log('⚠️ Conversion already tracked (ref)');
+      return;
+    }
+    if (typeof window !== 'undefined' && window.__conversionFired) {
+      console.log('⚠️ Conversion already tracked (window)');
+      return;
+    }
     const alreadyTracked = sessionStorage.getItem('conversionTracked');
-    const skipConversion = sessionStorage.getItem('skipConversion');
+    if (alreadyTracked) {
+      console.log('⚠️ Conversion already tracked (sessionStorage)');
+      return;
+    }
 
     // Skip conversion if it's a DOUBLE from network
+    const skipConversion = sessionStorage.getItem('skipConversion');
     if (skipConversion === 'true') {
       console.log('⚠️ Skipping Google Ads conversion - DOUBLE lead from network');
       sessionStorage.removeItem('skipConversion');
       return;
     }
 
-    if (typeof window !== 'undefined' && !alreadyTracked) {
-      // Set flag IMMEDIATELY to prevent double tracking from React Strict Mode
-      sessionStorage.setItem('conversionTracked', 'true');
+    // Set ALL flags IMMEDIATELY before any async operation
+    hasTrackedRef.current = true;
+    window.__conversionFired = true;
+    sessionStorage.setItem('conversionTracked', 'true');
 
-      const transactionId = sessionStorage.getItem('orderCode') || Math.floor(100000 + Math.random() * 900000).toString();
+    const transactionId = sessionStorage.getItem('orderCode') || Math.floor(100000 + Math.random() * 900000).toString();
 
-      // Get Enhanced Conversions data from sessionStorage
-      const ecPhone = sessionStorage.getItem('ec_phone') || '';
-      const ecAddress = sessionStorage.getItem('ec_address') || '';
-      const ecValue = parseFloat(sessionStorage.getItem('ec_value') || '1.0');
+    // Get Enhanced Conversions data from sessionStorage
+    const ecPhone = sessionStorage.getItem('ec_phone') || '';
+    const ecAddress = sessionStorage.getItem('ec_address') || '';
+    const ecValue = parseFloat(sessionStorage.getItem('ec_value') || '1.0');
 
-      // Function to fire conversion
-      const fireConversion = async () => {
-        // Prepare Enhanced Conversions user_data with hashed values
-        const userData: Record<string, string> = {};
-        if (ecPhone) {
-          const normalizedPhone = ecPhone.replace(/[\s\-\(\)]/g, '');
-          userData.phone_number = await sha256(normalizedPhone);
-        }
-        if (ecAddress) {
-          userData.address = {
-            street: await sha256(ecAddress)
-          } as unknown as string;
-        }
+    // Function to fire conversion ONCE
+    const fireConversion = async () => {
+      // Prepare Enhanced Conversions user_data with hashed values
+      const userData: Record<string, string> = {};
+      if (ecPhone) {
+        const normalizedPhone = ecPhone.replace(/[\s\-\(\)]/g, '');
+        userData.phone_number = await sha256(normalizedPhone);
+      }
+      if (ecAddress) {
+        userData.address = {
+          street: await sha256(ecAddress)
+        } as unknown as string;
+      }
 
-        // Fire conversion event only (no config, gtag already initialized)
-        window.gtag!('event', 'conversion', {
-          'send_to': 'AW-17806346250/x-9zCKj5wNUbEIqQ3apC',
-          'value': ecValue,
-          'currency': 'PLN',
-          'transaction_id': transactionId,
-          'user_data': userData
-        });
+      // Fire conversion event
+      window.gtag!('event', 'conversion', {
+        'send_to': 'AW-17806346250/x-9zCKj5wNUbEIqQ3apC',
+        'value': ecValue,
+        'currency': 'PLN',
+        'transaction_id': transactionId,
+        'user_data': userData
+      });
 
-        // Clean up EC data
-        sessionStorage.removeItem('ec_name');
-        sessionStorage.removeItem('ec_phone');
-        sessionStorage.removeItem('ec_address');
-        sessionStorage.removeItem('ec_value');
+      // Clean up EC data
+      sessionStorage.removeItem('ec_name');
+      sessionStorage.removeItem('ec_phone');
+      sessionStorage.removeItem('ec_address');
+      sessionStorage.removeItem('ec_value');
 
-        console.log('✅ Google Ads conversion tracked with Enhanced Conversions, transaction_id:', transactionId);
-      };
+      console.log('✅ Google Ads conversion tracked, transaction_id:', transactionId);
+    };
 
-      // Check if gtag is already loaded (from landing page layout)
-      if (typeof window.gtag === 'function') {
-        // gtag already exists, fire conversion directly
-        fireConversion();
+    // Check if gtag is already loaded
+    if (typeof window.gtag === 'function') {
+      fireConversion();
+    } else {
+      // Check if script is already loading/loaded
+      const existingScript = document.querySelector('script[src*="googletagmanager.com/gtag/js"]');
+      if (existingScript) {
+        // Script exists, wait for gtag to be ready
+        const waitForGtag = setInterval(() => {
+          if (typeof window.gtag === 'function') {
+            clearInterval(waitForGtag);
+            fireConversion();
+          }
+        }, 50);
+        setTimeout(() => clearInterval(waitForGtag), 5000);
       } else {
-        // gtag not loaded, load it first
+        // Load script fresh
         const script = document.createElement('script');
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17806346250';
