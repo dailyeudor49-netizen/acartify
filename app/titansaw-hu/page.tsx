@@ -1099,7 +1099,26 @@ export default function LandingPage() {
     }
   };
 
-  // Google Ads tracking removed - only track conversions on TY page (like kizbuy)
+  // Google Ads PageView Tracking (for campaign analytics)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17806346250';
+      document.head.appendChild(script);
+
+      script.onload = () => {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { window.dataLayer!.push(arguments); };
+        window.gtag('js', new Date());
+        // Only track page_view, no automatic remarketing/conversion triggers
+        window.gtag('config', 'AW-17806346250', {
+          'send_page_view': true,
+          'conversion_linker': false
+        });
+      };
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 pb-24 md:pb-0">
