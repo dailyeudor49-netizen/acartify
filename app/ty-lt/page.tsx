@@ -65,6 +65,9 @@ export default function ThankYouPage() {
     }
 
     if (typeof window !== 'undefined' && !alreadyTracked) {
+      // Set flag IMMEDIATELY to prevent double tracking from React Strict Mode
+      sessionStorage.setItem('conversionTracked', 'true');
+
       const transactionId = sessionStorage.getItem('orderCode') || Math.floor(100000 + Math.random() * 900000).toString();
 
       // Get Enhanced Conversions data from sessionStorage
@@ -72,48 +75,47 @@ export default function ThankYouPage() {
       const ecAddress = sessionStorage.getItem('ec_address') || '';
       const ecValue = parseFloat(sessionStorage.getItem('ec_value') || '1.0');
 
-      // Load gtag script
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17806346250';
-      document.head.appendChild(script);
-
-      script.onload = async () => {
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = function() { window.dataLayer!.push(arguments); };
-        window.gtag('js', new Date());
-
-        // Prepare Enhanced Conversions user_data with hashed values
+      // Function to fire conversion
+      const fireConversion = async () => {
         const userData: Record<string, string> = {};
         if (ecPhone) {
           const normalizedPhone = ecPhone.replace(/[\s\-\(\)]/g, '');
           userData.phone_number = await sha256(normalizedPhone);
         }
         if (ecAddress) {
-          userData.address = {
-            street: await sha256(ecAddress)
-          } as unknown as string;
+          userData.address = { street: await sha256(ecAddress) } as unknown as string;
         }
 
-        // Purchase LT conversion
-        window.gtag('config', 'AW-17806346250');
-        window.gtag('event', 'conversion', {
+        window.gtag!('event', 'conversion', {
           'send_to': 'AW-17806346250/NbCPCJebwdUbEIqQ3apC',
           'value': ecValue,
           'currency': 'EUR',
           'transaction_id': transactionId,
           'user_data': userData
         });
-        sessionStorage.setItem('conversionTracked', 'true');
 
-        // Clean up EC data
         sessionStorage.removeItem('ec_name');
         sessionStorage.removeItem('ec_phone');
         sessionStorage.removeItem('ec_address');
         sessionStorage.removeItem('ec_value');
-
-        console.log('✅ Google Ads conversion tracked with Enhanced Conversions, transaction_id:', transactionId);
+        console.log('✅ Google Ads conversion tracked, transaction_id:', transactionId);
       };
+
+      if (typeof window.gtag === 'function') {
+        fireConversion();
+      } else {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17806346250';
+        document.head.appendChild(script);
+        script.onload = () => {
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function() { window.dataLayer!.push(arguments); };
+          window.gtag('js', new Date());
+          window.gtag('config', 'AW-17806346250', { 'send_page_view': false });
+          fireConversion();
+        };
+      }
     }
   }, []);
 
